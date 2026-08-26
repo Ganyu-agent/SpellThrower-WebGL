@@ -208,7 +208,7 @@ namespace SpellThrower
             var titleRect = CreateRect("Title", button.transform);
             var title = titleRect.gameObject.AddComponent<Text>();
             var view = CardView.Build(button.GetComponent<RectTransform>(), button.GetComponent<Image>(), title,
-                cellSize, frame, titleFont, titleFont, 1f);
+                cellSize, frame, titleFont, titleFont, 1f, 1f, 0f);
             // 썸네일 안의 설명은 4px까지 줄어들어 읽을 수 없다. 설명은 상세 칸에서만 보여 준다.
             view.Set(card, LoadIcon(id), false);
 
@@ -273,7 +273,7 @@ namespace SpellThrower
             var titleRect = CreateRect("Title", slot);
             var title = titleRect.gameObject.AddComponent<Text>();
             var font = Resources.Load<Font>("neodgm");
-            _detailView = CardView.Build(slot, slotImage, title, cardSize, frame, font, font, 1f);
+            _detailView = CardView.Build(slot, slotImage, title, cardSize, frame, font, font, 1f, 1f, 0f);
 
             _detailStats = CreateKoreanText("Stats", detail, "", TextAnchor.UpperCenter);
             _detailStats.gameObject.AddComponent<LayoutElement>().preferredHeight = StatsHeight;
@@ -492,14 +492,9 @@ namespace SpellThrower
         void LoadSavedDeck()
         {
             var saved = LocalPrefs.Deck;
-            if (saved == null)
-            {
-                // A first-time browser has no PlayerPrefs yet. Start with the
-                // same valid starter deck used by the rules layer so Match is
-                // playable immediately; an explicit empty deck is preserved.
-                saved = Cards.DeckList;
-                LocalPrefs.Deck = saved;
-            }
+            // A first-time browser has no PlayerPrefs deck. Keep the collection
+            // empty so the player explicitly chooses the cards to submit.
+            if (saved == null) return;
 
             for (var i = 0; i < saved.Length; i++)
             {
@@ -599,6 +594,7 @@ namespace SpellThrower
             text.font = KoreanFont;
             text.fontSize = TextSize;
             text.color = Color.white;
+            text.fontStyle = FontStyle.Normal;
             text.alignment = anchor;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;

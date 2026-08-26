@@ -416,6 +416,10 @@ namespace SpellThrower
 
             var frame = Resources.Load<Sprite>("Cards/CardFrame");
             var bodyFont = Resources.Load<Font>("neodgm");
+            // GameScene's serialized title used Silver.ttf, which has no
+            // glyphs for most Korean card names. Card titles must use the same
+            // Korean font as the deck builder instead of inheriting that asset.
+            var cardTitleFont = bodyFont;
             BuildTileLabels(bodyFont);
             for (int i = 0; i < _cardIcons.Length; i++)
                 _cardIcons[i] = Resources.Load<Sprite>("CardArt/" + CardText.ArtNames[i]);
@@ -451,7 +455,7 @@ namespace SpellThrower
 
                 _cardView[i] = CardView.Build(rt, _cardBg[i], _cardTxt[i],
                                               new Vector2(CardSlotW, CardSlotH) * CardArtScale,
-                                              frame, _cardTxt[i].font, bodyFont, 2f * CardArtScale,
+                                              frame, cardTitleFont, bodyFont, 2f * CardArtScale,
                                               CardArtScale);
                 c.gameObject.AddComponent<CardHover>().Init(this, ci);
                 c.GetComponent<CardDrag>().Init(ci);
@@ -460,8 +464,8 @@ namespace SpellThrower
 
             BuildOpponentHand();
             BuildPiles(bodyFont);
-            BuildDetailPanel(frame, _cardTxt[0].font, bodyFont);
-            BuildFoePlayedPanel(frame, _cardTxt[0].font, bodyFont);
+            BuildDetailPanel(frame, cardTitleFont, bodyFont);
+            BuildFoePlayedPanel(frame, cardTitleFont, bodyFont);
             BuildSettingsPanel(bodyFont);
 
             _fx = gameObject.AddComponent<BattleFx>();

@@ -16,6 +16,9 @@ namespace SpellThrower
         GameObject _matchingUi;
         TMP_Text _connectionLog;
         bool _connecting;
+        // This is the early UI gate requested by the menu flow. The rules
+        // layer still validates the complete legal deck before connecting.
+        const int MinimumSelectedCardsForMatchHint = 13;
 
         void Awake()
         {
@@ -32,17 +35,23 @@ namespace SpellThrower
             if (_deckBuilder == null || _registration == null) return;
 
             _matchingUi?.SetActive(true);
+            var cards = _deckBuilder.CurrentDeck;
+            if (cards.Length < MinimumSelectedCardsForMatchHint)
+            {
+                SetLog("SELECT AT LEAST 13 CARDS BEFORE MATCH (" + cards.Length + "/13)");
+                return;
+            }
+
+            if (!GameRules.IsValidDeck(cards))
+            {
+                SetLog("BUILD A VALID DECK (" + cards.Length + "/" + GameRules.DeckSize + ")");
+                return;
+            }
+
             var nickname = _registration.ConfirmedNickname?.Trim();
             if (string.IsNullOrWhiteSpace(nickname))
             {
                 SetLog("REGISTER YOUR NAME FIRST");
-                return;
-            }
-
-            var cards = _deckBuilder.CurrentDeck;
-            if (!GameRules.IsValidDeck(cards))
-            {
-                SetLog("BUILD A VALID 25-CARD DECK (" + cards.Length + "/" + GameRules.DeckSize + ")");
                 return;
             }
 

@@ -35,9 +35,10 @@ namespace SpellThrower
         /// slot 은 씬에 있던 Card_N. slotText 는 그 자식으로 이미 있던 Text 로, 이름표로 재활용한다.
         public static CardView Build(RectTransform slot, Image slotImage, Text slotText, Vector2 cardSize,
                                      Sprite frame, Font titleFont, Font bodyFont, float outlineWidth = 1f,
-                                     float titleScale = 1f)
+                                     float titleScale = 1f, float titleOutlineWidth = -1f)
         {
             var v = new CardView();
+            if (titleOutlineWidth < 0f) titleOutlineWidth = outlineWidth;
 
             // 슬롯 자신의 그래픽은 커서·클릭 판정만 맡고 보이지는 않는다.
             slotImage.sprite = null;
@@ -62,7 +63,7 @@ namespace SpellThrower
                     var titleLayer = EnsureTitleLayer(slot, cardSize, titleScale);
                     v._title.transform.SetParent(titleLayer, false);
                     v._iconFit = ClipIconToWindow(v.Visual, v._icon);
-                    ApplyTitleStyle(v._title, titleFont, cardSize, outlineWidth);
+                    ApplyTitleStyle(v._title, titleFont, cardSize, titleOutlineWidth);
                     Style(v._cost, bodyFont, Color.white, TextAnchor.MiddleCenter);
                     Style(v._des, bodyFont, Color.black, TextAnchor.UpperLeft);
                     ClipToCard(v.Visual);
@@ -88,7 +89,7 @@ namespace SpellThrower
             v._title = slotText;
             var newTitleLayer = EnsureTitleLayer(slot, cardSize, titleScale);
             slotText.transform.SetParent(newTitleLayer, false);
-            ApplyTitleStyle(v._title, titleFont, cardSize, outlineWidth);
+            ApplyTitleStyle(v._title, titleFont, cardSize, titleOutlineWidth);
             slotText.transform.SetAsLastSibling();
 
             v._cost = MakeText(v.Visual, "Cost", CostBox, bodyFont, Color.white, TextAnchor.MiddleCenter);
@@ -127,6 +128,7 @@ namespace SpellThrower
             Place(title.rectTransform, TitleBox);
             if (font != null) title.font = font;
             title.color = Color.black;
+            title.fontStyle = FontStyle.Normal;
             title.alignment = TextAnchor.MiddleCenter;
             title.horizontalOverflow = HorizontalWrapMode.Wrap;
             title.verticalOverflow = VerticalWrapMode.Truncate;
@@ -136,6 +138,11 @@ namespace SpellThrower
 
             if (outlineWidth > 0f)
                 AddPixelOutline(title, outlineWidth);
+            else
+            {
+                var outline = title.GetComponent<Outline>();
+                if (outline != null) outline.enabled = false;
+            }
         }
 
         /// The hand builds the art at its focused size and scales the whole Visual

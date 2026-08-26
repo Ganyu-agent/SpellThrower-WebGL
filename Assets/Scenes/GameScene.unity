@@ -24859,7 +24859,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 67, y: 312.2}
+  m_AnchoredPosition: {x: 67, y: 373.2}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &845382782
@@ -50007,7 +50007,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 67, y: -200.5}
+  m_AnchoredPosition: {x: 67, y: -174.1}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1493527476
@@ -57004,6 +57004,7 @@ MonoBehaviour:
   tileFireZone: {r: 2.6, g: 0.6, b: 0.15, a: 0.85}
   tileDelayedTeleport: {r: 1.1, g: 0.8, b: 2.8, a: 0.85}
   tileTotem: {r: 2.4, g: 1.9, b: 0.55, a: 0.85}
+  tileTotemFoe: {r: 4.6, g: 0.7, b: 1.8, a: 0.95}
   tileIceZone: {r: 0.7, g: 2.1, b: 3.2, a: 0.85}
   cardSelected: {r: 0.75, g: 0.65, b: 0.2, a: 1}
   fieldIdle: {r: 0.18, g: 0.18, b: 0.22, a: 1}
