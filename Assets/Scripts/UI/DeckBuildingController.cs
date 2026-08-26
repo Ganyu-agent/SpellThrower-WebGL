@@ -492,7 +492,14 @@ namespace SpellThrower
         void LoadSavedDeck()
         {
             var saved = LocalPrefs.Deck;
-            if (saved == null) return;
+            if (saved == null)
+            {
+                // A first-time browser has no PlayerPrefs yet. Start with the
+                // same valid starter deck used by the rules layer so Match is
+                // playable immediately; an explicit empty deck is preserved.
+                saved = Cards.DeckList;
+                LocalPrefs.Deck = saved;
+            }
 
             for (var i = 0; i < saved.Length; i++)
             {
