@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -42,9 +43,38 @@ namespace SpellThrower.BuildTools
                 throw new InvalidOperationException(
                     $"WebGL build failed: {report.summary.result}, errors={report.summary.totalErrors}");
 
+            ConfigureFixedFhdCanvas(output);
             File.WriteAllText(Path.Combine(output, ".nojekyll"), string.Empty);
             Debug.Log($"WebGL build succeeded: {Path.GetFullPath(output)} " +
                       $"({report.summary.totalSize} bytes)");
+        }
+
+        static void ConfigureFixedFhdCanvas(string output)
+        {
+            var indexPath = Path.Combine(output, "index.html");
+            var html = File.ReadAllText(indexPath);
+            html = Regex.Replace(html,
+                "<canvas id=\"unity-canvas\" width=\\d+ height=\\d+",
+                "<canvas id=\"unity-canvas\" width=1920 height=1080");
+            html = html.Replace(
+                "// config.matchWebGLToCanvasSize = false;",
+                "config.matchWebGLToCanvasSize = false;");
+            html = Regex.Replace(html,
+                "canvas\\.style\\.width = \"\\d+px\";\\s*canvas\\.style\\.height = \"\\d+px\";",
+                "canvas.style.width = \"100%\";\n        canvas.style.height = \"100%\";");
+            File.WriteAllText(indexPath, html);
+
+            var stylePath = Path.Combine(output, "TemplateData", "style.css");
+            const string fhdMarker = "/* Fixed 1920x1080 render target";
+            var style = File.ReadAllText(stylePath);
+            if (!style.Contains(fhdMarker))
+                File.AppendAllText(stylePath,
+                "\n" + fhdMarker + ", scaled down without changing aspect ratio. */\n" +
+                "html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }\n" +
+                "#unity-container.unity-desktop { width: min(100vw, calc((100vh - 38px) * 16 / 9)); }\n" +
+                "#unity-container.unity-desktop #unity-canvas { width: 100%; height: auto; aspect-ratio: 16 / 9; display: block; }\n" +
+                "#unity-container.unity-desktop #unity-footer { width: 100%; }\n" +
+                ".unity-mobile #unity-canvas { width: 100vw; height: auto; max-height: 100vh; aspect-ratio: 16 / 9; }\n");
         }
     }
 }

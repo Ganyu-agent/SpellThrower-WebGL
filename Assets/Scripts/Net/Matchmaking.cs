@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -17,10 +15,13 @@ namespace SpellThrower
     {
         public const string SessionType = "spellthrower1v1";
         const string QueueName = "spellthrower-1v1";
-        const string WebSessionName = "SpellThrower-WebGL-v1";
+        const string WebSessionName = "SpellThrower-WebGL-v3";
+        const string WebSessionIdPrefix = "spellthrower-webgl-v3-";
+        const int WebSessionSlots = 8;
 
         public static ISession Current;
         static Task _prepareTask;
+        static int _webSlotOffset;
 
         public static Task PrepareAsync()
         {
@@ -61,26 +62,31 @@ namespace SpellThrower
             .WithRelayNetwork();
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-            // WebGL 심사 빌드는 Matchmaker queue가 아니라 Lobby quick-join을 사용한다.
-            // 같은 SpellThrower 로비가 있으면 입장하고, 없으면 짧게 재시도한 뒤 하나를 만든다.
-            // Relay/WSS와 Netcode 세션은 동일하게 유지하므로 브라우저의 UDP 제한만 우회한다.
-            // 두 페이지가 동시에 빈 로비를 확인하면 둘 다 새 로비를 만들 수 있으므로,
-            // 요청 시작 전에 페이지별 무작위 지연을 둬 먼저 생성된 로비에 참가할 시간을 준다.
-            var rendezvousDelayMs = 1000 + Math.Abs(Guid.NewGuid().GetHashCode() % 9000);
-            await Awaitable.WaitForSecondsAsync(rendezvousDelayMs / 1000f);
-            var quickJoin = new QuickJoinOptions
+            // CreateOrJoin은 같은 ID에 동시에 들어온 요청을 하나의 세션으로 수렴시킨다.
+            // Quick Join timeout 뒤 양쪽이 각각 호스트가 되는 race와 의도적인 대기를 없앤다.
+            // 이미 2명이 찬 슬롯은 다음 ID로 넘어가 여러 대전을 동시에 수용한다.
+            Current = null;
+            for (var attempt = 0; attempt < WebSessionSlots; attempt++)
             {
-                Filters = new List<FilterOption>
+                var slot = (_webSlotOffset + attempt) % WebSessionSlots;
+                try
                 {
-                    new FilterOption(FilterField.Name, WebSessionName, FilterOperation.Equal)
-                },
-                // 두 브라우저가 동시에 빈 로비를 조회하면 둘 다 생성 단계로
-                // 넘어갈 수 있다. 페이지별 작은 지연으로 한쪽이 먼저 만든 로비를
-                // 다른 쪽이 발견할 시간을 남긴다.
-                Timeout = TimeSpan.FromSeconds(16d),
-                CreateSession = true
-            };
-            Current = await MultiplayerService.Instance.MatchmakeSessionAsync(quickJoin, session);
+                    Current = await MultiplayerService.Instance.CreateOrJoinSessionAsync(
+                        WebSessionIdPrefix + slot, session);
+                    _webSlotOffset = slot;
+                    break;
+                }
+                catch (SessionException e) when (attempt + 1 < WebSessionSlots)
+                {
+                    Debug.LogWarning("[스펠 스로워] WebGL 세션 슬롯 " + slot +
+                                     " 참가 실패, 다음 슬롯 시도: " + e.Message);
+                    // Create-or-join은 플레이어당 초당 1회 제한이므로 다음 요청을 간격 둔다.
+                    await Awaitable.WaitForSecondsAsync(1.1f);
+                }
+            }
+
+            if (Current == null)
+                throw new System.InvalidOperationException("No WebGL matchmaking session slot is available.");
 #else
             Current = await MultiplayerService.Instance.MatchmakeSessionAsync(
                 new MatchmakerOptions { QueueName = QueueName }, session);
@@ -119,6 +125,10 @@ namespace SpellThrower
         {
             var s = Current;
             Current = null;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // 재시도나 다음 판은 방금 실패했거나 끝난 슬롯을 건너뛴다.
+            _webSlotOffset = (_webSlotOffset + 1) % WebSessionSlots;
+#endif
             if (s == null) return;
             try { await s.LeaveAsync(); }
             catch (System.Exception e) { Debug.LogWarning("[스펠 스로워] 나가기 실패: " + e.Message); }
