@@ -30,6 +30,7 @@ namespace SpellThrower
 
         Image _icon, _frame;
         AspectRatioFitter _iconFit;
+        RectTransform _titleLayer;
         Text _cost, _title, _des;
 
         /// slot 은 씬에 있던 Card_N. slotText 는 그 자식으로 이미 있던 Text 로, 이름표로 재활용한다.
@@ -60,13 +61,14 @@ namespace SpellThrower
                 if (v._icon != null && v._frame != null && v._title != null && v._cost != null && v._des != null)
                 {
                     if (v._frame.sprite == null && frame != null) v._frame.sprite = frame;
-                    var titleLayer = EnsureTitleLayer(slot, cardSize, titleScale);
-                    v._title.transform.SetParent(titleLayer, false);
+                    v._titleLayer = EnsureTitleLayer(slot, cardSize, titleScale);
+                    v._title.transform.SetParent(v._titleLayer, false);
                     v._iconFit = ClipIconToWindow(v.Visual, v._icon);
                     ApplyTitleStyle(v._title, titleFont, cardSize, titleOutlineWidth);
                     Style(v._cost, bodyFont, Color.white, TextAnchor.MiddleCenter);
                     Style(v._des, bodyFont, Color.black, TextAnchor.UpperLeft);
                     ClipToCard(v.Visual);
+                    v.SyncTitleToVisual();
                     return v;
                 }
             }
@@ -87,14 +89,15 @@ namespace SpellThrower
 
             // 이미 있던 Text 를 이름표 자리로 옮긴다. 프레임보다 앞에 와야 글씨가 보인다.
             v._title = slotText;
-            var newTitleLayer = EnsureTitleLayer(slot, cardSize, titleScale);
-            slotText.transform.SetParent(newTitleLayer, false);
+            v._titleLayer = EnsureTitleLayer(slot, cardSize, titleScale);
+            slotText.transform.SetParent(v._titleLayer, false);
             ApplyTitleStyle(v._title, titleFont, cardSize, titleOutlineWidth);
             slotText.transform.SetAsLastSibling();
 
             v._cost = MakeText(v.Visual, "Cost", CostBox, bodyFont, Color.white, TextAnchor.MiddleCenter);
             v._des = MakeText(v.Visual, "Des", DesBox, bodyFont, Color.black, TextAnchor.UpperLeft);
             ClipToCard(v.Visual);
+            v.SyncTitleToVisual();
             return v;
         }
 
@@ -155,6 +158,18 @@ namespace SpellThrower
             _title.fontSize = Mathf.Max(1, Mathf.RoundToInt(size));
         }
 
+        /// 제목 오버레이는 Visual 밖에 있어 카드의 확대·회전·상승을 자동으로
+        /// 상속하지 않는다. 매 프레임 같은 변환을 적용해 이름판과 글자를 맞춘다.
+        public void SyncTitleToVisual()
+        {
+            if (_titleLayer == null || Visual == null) return;
+
+            _titleLayer.sizeDelta = Visual.sizeDelta;
+            _titleLayer.anchoredPosition = Visual.anchoredPosition;
+            _titleLayer.localRotation = Visual.localRotation;
+            _titleLayer.localScale = Visual.localScale;
+        }
+
         public void Set(CardDef card, Sprite icon, bool selected)
         {
             _icon.sprite = icon;
@@ -196,10 +211,10 @@ namespace SpellThrower
                 visual.gameObject.AddComponent<RectMask2D>();
         }
 
-        /// Keep text out of the high-resolution art node.  GameUI creates the
-        /// artwork at FocusScale and scales that node down while idle; a title
-        /// under it becomes unreadable even when its nominal font size is 16.
-        /// The overlay uses the displayed card size and remains at scale one.
+        /// Keep text out of the high-resolution art node. GameUI creates the
+        /// artwork at FocusScale and scales that node down while idle. The
+        /// overlay uses the same transform as the artwork so the title remains
+        /// aligned in both idle and focused states.
         static RectTransform EnsureTitleLayer(RectTransform slot, Vector2 cardSize, float titleScale)
         {
             var layer = slot.Find("TitleLayer") as RectTransform;
@@ -214,7 +229,7 @@ namespace SpellThrower
             layer.anchoredPosition = Vector2.zero;
             layer.localRotation = Quaternion.identity;
             layer.localScale = Vector3.one;
-            layer.sizeDelta = cardSize / Mathf.Max(0.001f, titleScale);
+            layer.sizeDelta = cardSize;
             layer.SetAsLastSibling();
             return layer;
         }

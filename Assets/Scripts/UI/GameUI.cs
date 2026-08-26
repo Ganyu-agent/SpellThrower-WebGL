@@ -1936,6 +1936,7 @@ namespace SpellThrower
                     dragged.localRotation = Quaternion.identity;
                     dragged.localScale = Vector3.one * (TileScale() / CardArtScale);
                     _cardView[i].SetTitleFontSize(HandTitlePixels);
+                    _cardView[i].SyncTitleToVisual();
                     if (_cardGroup[i] != null) _cardGroup[i].alpha = 0.55f;
                     continue;
                 }
@@ -1954,6 +1955,7 @@ namespace SpellThrower
                 visual.localScale =
                     Vector3.one * (pop * Mathf.Lerp(1f, FocusScale, _cardFocus[i]) / CardArtScale);
                 _cardView[i].SetTitleFontSize(HandTitlePixels);
+                _cardView[i].SyncTitleToVisual();
 
                 // 말을 가리면 카드를 흐리게 한다. 손패가 화면 아래라 보통은 안 겹치지만
                 // 말이 아래쪽 줄에 서면 겹친다.
