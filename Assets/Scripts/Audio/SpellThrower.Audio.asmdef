@@ -1,0 +1,8 @@
+{
+    "name": "SpellThrower.Audio",
+    "rootNamespace": "SpellThrower",
+    "references": [
+        "SpellThrower.Core"
+    ],
+    "autoReferenced": true
+}

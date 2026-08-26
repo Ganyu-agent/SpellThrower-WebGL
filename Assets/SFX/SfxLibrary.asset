@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b0d2f4a8c1e3f5b7d9a0c2e4f6b8d1a, type: 3}
+  m_Name: SfxLibrary
+  m_EditorClassIdentifier: SpellThrower.Audio::SpellThrower.SfxLibrary
+  _slots:
+  - Clip: {fileID: 0}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 3f67337699f8001568d26a3f6fe422cd, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: c6543440289df1def91930136698e4ea, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 40afc0028c1038bd4b49a8b3876dd76c, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: c28ccdd2bcc9adc3b992913ab03f5bdd, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 6c8b9172453f3dec0ba9f84fa9c36791, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 745ca06d0c4e768d69c2e2b9bb55ef38, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 931ec45392cc0200499253ba86828b2d, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 5dfe3082cde6bb64dbe37b4542d5a7fd, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: b4be72366795eaf94912498e010769ef, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 931ec45392cc0200499253ba86828b2d, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: fe06b0c12a5000a8b99f2d3976d66c71, type: 3}
+    Volume: 1
+  - Clip: {fileID: 0}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 32f1c3db562bd66f387b9488446a894f, type: 3}
+    Volume: 1
+  - Clip: {fileID: 0}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 1cf021451145452edb9f585a8d83ca07, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 745ca06d0c4e768d69c2e2b9bb55ef38, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: ac270420a6b651fb98e6d5d20dd72202, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 68fddd74ab413df0589226cf24fab894, type: 3}
+    Volume: 1
+  - Clip: {fileID: 8300000, guid: 68fddd74ab413df0589226cf24fab894, type: 3}
+    Volume: 1

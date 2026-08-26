@@ -1,0 +1,9 @@
+{
+    "name": "SpellThrower.Core",
+    "rootNamespace": "SpellThrower",
+    "references": [
+        "Unity.Netcode.Runtime",
+        "Unity.Collections"
+    ],
+    "autoReferenced": true
+}
