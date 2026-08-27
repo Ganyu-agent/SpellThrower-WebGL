@@ -16,6 +16,8 @@ namespace SpellThrower
         GameObject _matchingUi;
         TMP_Text _connectionLog;
         bool _connecting;
+        bool _matchOperationActive;
+        bool _cancelRequested;
         // This is the early UI gate requested by the menu flow. The rules
         // layer still validates the complete legal deck before connecting.
         const int MinimumSelectedCardsForMatchHint = 13;
@@ -31,7 +33,7 @@ namespace SpellThrower
 
         public void BeginMatch()
         {
-            if (_connecting) return;
+            if (_connecting || _matchOperationActive) return;
             if (_deckBuilder == null || _registration == null) return;
 
             _matchingUi?.SetActive(true);
@@ -55,7 +57,18 @@ namespace SpellThrower
                 return;
             }
 
+            _cancelRequested = false;
+            _matchOperationActive = true;
             StartCoroutine(ConnectAndSubmit(nickname, cards));
+        }
+
+        /// Matching 화면의 Back이 눌려도 진행 중인 UGS 비동기 호출은 즉시
+        /// 취소할 수 없으므로, 코루틴을 죽이지 않고 완료 시 세션을 정리한다.
+        public void CancelMatch()
+        {
+            if (!_matchOperationActive) return;
+            _cancelRequested = true;
+            SetLog("CANCELLING MATCH...");
         }
 
         IEnumerator ConnectAndSubmit(string nickname, byte[] cards)
@@ -65,67 +78,107 @@ namespace SpellThrower
             const float networkReadyTimeout = 12f;
             const float opponentLoadoutTimeout = 12f;
 
-            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            try
             {
-                SetLog(attempt == 0 ? "CONNECTING TO SERVER..." : "RETRYING MATCH...");
-
-                var matchTask = Matchmaking.FindMatchAsync(nickname);
-                while (!matchTask.IsCompleted) yield return null;
-
-                if (matchTask.IsFaulted || matchTask.IsCanceled)
+                for (var attempt = 0; attempt < maxAttempts; attempt++)
                 {
-                    if (matchTask.IsFaulted) Debug.LogException(matchTask.Exception);
-                    if (attempt + 1 < maxAttempts)
+                    SetLog(attempt == 0 ? "CONNECTING TO SERVER..." : "RETRYING MATCH...");
+
+                    var matchTask = Matchmaking.FindMatchAsync(nickname);
+                    while (!matchTask.IsCompleted) yield return null;
+
+                    if (_cancelRequested)
                     {
                         yield return LeaveCurrentSession();
-                        continue;
+                        yield break;
                     }
 
-                    SetLog("CONNECTION FAILED - PRESS MATCH TO RETRY");
-                    _connecting = false;
-                    yield break;
-                }
-
-                SetLog(Matchmaking.Current != null && Matchmaking.Current.IsHost
-                    ? "CONNECTED - WAITING FOR OPPONENT..."
-                    : "OPPONENT FOUND - SENDING DECK...");
-
-                var elapsed = 0f;
-                while ((NetGame.I == null || NetGame.I.MyPlayer < 0) && elapsed < networkReadyTimeout)
-                {
-                    elapsed += Time.unscaledDeltaTime;
-                    yield return null;
-                }
-
-                if (NetGame.I != null && NetGame.I.MyPlayer >= 0)
-                {
-                    var deck = new FixedList32Bytes<byte>();
-                    for (var i = 0; i < cards.Length; i++) deck.Add(cards[i]);
-                    NetGame.I.SubmitLoadoutServerRpc(new FixedString32Bytes(nickname), deck);
-                    SetLog("DECK SENT - WAITING FOR OPPONENT...");
-
-                    elapsed = 0f;
-                    while (NetGame.I != null && !NetGame.I.InGame && elapsed < opponentLoadoutTimeout)
+                    if (matchTask.IsFaulted || matchTask.IsCanceled)
                     {
+                        if (matchTask.IsFaulted) Debug.LogException(matchTask.Exception);
+                        if (attempt + 1 < maxAttempts)
+                        {
+                            yield return LeaveCurrentSession();
+                            continue;
+                        }
+
+                        SetLog("CONNECTION FAILED - PRESS MATCH TO RETRY");
+                        yield break;
+                    }
+
+                    SetLog(Matchmaking.Current != null && Matchmaking.Current.IsHost
+                        ? "CONNECTED - WAITING FOR OPPONENT..."
+                        : "OPPONENT FOUND - SENDING DECK...");
+
+                    var elapsed = 0f;
+                    while ((NetGame.I == null || NetGame.I.MyPlayer < 0) && elapsed < networkReadyTimeout)
+                    {
+                        if (_cancelRequested)
+                        {
+                            yield return LeaveCurrentSession();
+                            yield break;
+                        }
                         elapsed += Time.unscaledDeltaTime;
                         yield return null;
                     }
 
-                    if (NetGame.I != null && NetGame.I.InGame)
+                    if (NetGame.I != null && NetGame.I.MyPlayer >= 0)
                     {
-                        SetLog("DUEL STARTING...");
-                        yield return null;
-                        SceneManager.LoadScene("GameScene");
-                        yield break;
+                        if (_cancelRequested)
+                        {
+                            yield return LeaveCurrentSession();
+                            yield break;
+                        }
+
+                        var deck = new FixedList32Bytes<byte>();
+                        for (var i = 0; i < cards.Length; i++) deck.Add(cards[i]);
+                        NetGame.I.SubmitLoadoutServerRpc(new FixedString32Bytes(nickname), deck);
+                        SetLog("DECK SENT - WAITING FOR OPPONENT...");
+
+                        elapsed = 0f;
+                        while (NetGame.I != null && !NetGame.I.InGame && elapsed < opponentLoadoutTimeout)
+                        {
+                            if (_cancelRequested)
+                            {
+                                yield return LeaveCurrentSession();
+                                yield break;
+                            }
+                            elapsed += Time.unscaledDeltaTime;
+                            yield return null;
+                        }
+
+                        if (NetGame.I != null && NetGame.I.InGame)
+                        {
+                            if (_cancelRequested)
+                            {
+                                yield return LeaveCurrentSession();
+                                yield break;
+                            }
+                            SetLog("DUEL STARTING...");
+                            yield return null;
+                            if (_cancelRequested)
+                            {
+                                yield return LeaveCurrentSession();
+                                yield break;
+                            }
+                            SceneManager.LoadScene("GameScene");
+                            yield break;
+                        }
                     }
+
+                    Debug.LogWarning("[스펠 스로워] 매칭 동기화 시간 초과 - 세션을 정리하고 재시도합니다.");
+                    yield return LeaveCurrentSession();
+                    if (_cancelRequested) yield break;
                 }
 
-                Debug.LogWarning("[스펠 스로워] 매칭 동기화 시간 초과 - 세션을 정리하고 재시도합니다.");
-                yield return LeaveCurrentSession();
+                SetLog("MATCH TIMED OUT - PRESS MATCH TO RETRY");
             }
-
-            SetLog("MATCH TIMED OUT - PRESS MATCH TO RETRY");
-            _connecting = false;
+            finally
+            {
+                _connecting = false;
+                _matchOperationActive = false;
+                _cancelRequested = false;
+            }
         }
 
         IEnumerator LeaveCurrentSession()

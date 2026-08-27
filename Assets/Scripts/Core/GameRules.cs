@@ -835,6 +835,11 @@ namespace SpellThrower
             if (placement)
                 return !IsBlocked(ref s, tx, ty) && !IsOccupied(ref s, tx, ty);
 
+            // Direct attacks must resolve against a player. Cards that create
+            // a zone or otherwise affect an area explicitly opt into empty
+            // tiles through their catalog metadata.
+            if (!def.AllowEmptyTile && !IsOccupied(ref s, tx, ty)) return false;
+
             if (def.Arc) return true;   // 낙뢰류는 장애물을 무시한다
             if (IsMapObstacle(ref s, tx, ty)) return false;
             return HasLineOfSight(ref s, X(ref s, player), Y(ref s, player), tx, ty);

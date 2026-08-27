@@ -224,6 +224,7 @@ namespace SpellThrower
 
         void ReturnToLobby()
         {
+            _menuMatchmaking?.CancelMatch();
             _deckUi.SetActive(false);
             _settingsUi.SetActive(false);
             _matchingUi.SetActive(false);

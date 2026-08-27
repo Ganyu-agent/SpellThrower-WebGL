@@ -74,7 +74,8 @@ namespace SpellThrower.BuildTools
                 "#unity-container.unity-desktop { width: min(100vw, calc((100vh - 38px) * 16 / 9)); }\n" +
                 "#unity-container.unity-desktop #unity-canvas { width: 100%; height: auto; aspect-ratio: 16 / 9; display: block; }\n" +
                 "#unity-container.unity-desktop #unity-footer { width: 100%; }\n" +
-                ".unity-mobile #unity-canvas { width: 100vw; height: auto; max-height: 100vh; aspect-ratio: 16 / 9; }\n");
+                "#unity-container.unity-mobile { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(100vw, calc(100vh * 16 / 9)); height: min(100vh, calc(100vw * 9 / 16)); }\n" +
+                ".unity-mobile #unity-canvas { width: 100%; height: 100%; aspect-ratio: 16 / 9; display: block; }\n");
         }
     }
 }

@@ -165,6 +165,13 @@ namespace SpellThrower
         byte _seenWinner;
         BattleSequencer _seq;
         bool _boardAligned;
+        int _boardAlignedPixelWidth = -1;
+        int _boardAlignedPixelHeight = -1;
+        float _boardAlignedOrthoSize = -1f;
+        Rect _boardAlignedPixelRect;
+        Vector3 _boardAlignedCameraPosition;
+        Quaternion _boardAlignedCameraRotation = Quaternion.identity;
+        Vector3 _boardAlignedBoardScale;
         bool _wasLive;   // GameScene 에서 한 번이라도 접속돼 있었는지
         Material _tileMat;
         MaterialPropertyBlock _tileMpb;
@@ -2278,18 +2285,33 @@ namespace SpellThrower
 
         void SyncBoardOverlay()
         {
-            if (_boardAligned || _board == null || WorldCamera() == null) return;
+            if (_board == null) return;
+            var cam = WorldCamera();
+            if (cam == null) return;
 
             // 격자 레이아웃에 맡기면 씬에 남은 옛 셀 간격이 그대로 쓰여 칸이 어긋난다.
             // 칸마다 월드 좌표를 화면으로 옮겨 직접 얹는다. 화면을 뒤집어도 그대로 맞는다.
             var boardRect = (RectTransform)_board;
-            var cam = WorldCamera();
+            if (_boardAligned &&
+                _boardAlignedPixelWidth == cam.pixelWidth &&
+                _boardAlignedPixelHeight == cam.pixelHeight &&
+                _boardAlignedPixelRect == cam.pixelRect &&
+                Mathf.Abs(_boardAlignedOrthoSize - cam.orthographicSize) < 0.0001f &&
+                (_boardAlignedCameraPosition - cam.transform.position).sqrMagnitude < 0.0001f &&
+                Quaternion.Angle(_boardAlignedCameraRotation, cam.transform.rotation) < 0.01f &&
+                (_boardAlignedBoardScale - boardRect.lossyScale).sqrMagnitude < 0.0001f)
+                return;
+
             var grid = _board.GetComponent<GridLayoutGroup>();
             if (grid != null && grid.enabled) grid.enabled = false;
 
             boardRect.localRotation = Quaternion.identity;
-            float cell = Mathf.Abs(cam.WorldToScreenPoint(TileCenterWorld(1, 0)).x
-                                 - cam.WorldToScreenPoint(TileCenterWorld(0, 0)).x);
+            float cellX = Mathf.Abs(cam.WorldToScreenPoint(TileCenterWorld(1, 0)).x
+                                   - cam.WorldToScreenPoint(TileCenterWorld(0, 0)).x);
+            float cellY = Mathf.Abs(cam.WorldToScreenPoint(TileCenterWorld(0, 1)).y
+                                   - cam.WorldToScreenPoint(TileCenterWorld(0, 0)).y);
+            float cell = Mathf.Min(cellX, cellY);
+            if (cell <= 0f || boardRect.lossyScale.x <= 0f) return;
 
             for (int y = 0; y < N; y++)
                 for (int x = 0; x < N; x++)
@@ -2302,6 +2324,13 @@ namespace SpellThrower
                 }
 
             Canvas.ForceUpdateCanvases();
+            _boardAlignedPixelWidth = cam.pixelWidth;
+            _boardAlignedPixelHeight = cam.pixelHeight;
+            _boardAlignedPixelRect = cam.pixelRect;
+            _boardAlignedOrthoSize = cam.orthographicSize;
+            _boardAlignedCameraPosition = cam.transform.position;
+            _boardAlignedCameraRotation = cam.transform.rotation;
+            _boardAlignedBoardScale = boardRect.lossyScale;
             _boardAligned = true;
         }
 
