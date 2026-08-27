@@ -1110,8 +1110,9 @@ namespace SpellThrower
             ref var disc = ref GameRules.Disc(ref s, me);
             _deckTxt.text = deck.Length.ToString();
             _discTxt.text = disc.Length.ToString();
-            if (_deckImg.enabled != (deck.Length > 0)) _deckImg.enabled = deck.Length > 0;
-            if (_discImg.enabled != (disc.Length > 0)) _discImg.enabled = disc.Length > 0;
+            // 덱과 버린 패는 0장이어도 숫자 자리와 카드 뒷면 더미를 유지한다.
+            _deckImg.enabled = true;
+            _discImg.enabled = true;
             UpdateFlyCard();
 
             for (int i = 0; i < _cardGo.Length; i++)
