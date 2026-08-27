@@ -456,7 +456,7 @@ namespace SpellThrower
                 _cardView[i] = CardView.Build(rt, _cardBg[i], _cardTxt[i],
                                               new Vector2(CardSlotW, CardSlotH) * CardArtScale,
                                               frame, cardTitleFont, bodyFont, 2f * CardArtScale,
-                                              CardArtScale);
+                                              CardArtScale, 0f);
                 c.gameObject.AddComponent<CardHover>().Init(this, ci);
                 c.GetComponent<CardDrag>().Init(ci);
                 _cardGroup[i] = c.GetComponent<CanvasGroup>();
@@ -1344,7 +1344,7 @@ namespace SpellThrower
 
             _foeCardView = CardView.Build(rt, img, txt,
                                           new Vector2(DetailW, DetailH) * FoeCardScale,
-                                          frame, titleFont, bodyFont);
+                                          frame, titleFont, bodyFont, 1f, 1f, 0f);
             img.raycastTarget = false;   // 판을 가리지 않도록 클릭도 먹지 않는다
             _foeCardGo = root;
             _foeCardGo.SetActive(false);
@@ -1414,7 +1414,7 @@ namespace SpellThrower
             var txt = txtGo.AddComponent<Text>();
 
             _detailView = CardView.Build(rt, img, txt, new Vector2(DetailW, DetailH),
-                                         frame, titleFont, bodyFont);
+                                         frame, titleFont, bodyFont, 1f, 1f, 0f);
             img.raycastTarget = false;   // 카드 자체는 눌러도 아무 일 없다
 
             BuildCloseButton(rt, titleFont);
