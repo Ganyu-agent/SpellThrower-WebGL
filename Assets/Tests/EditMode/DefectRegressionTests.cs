@@ -67,6 +67,12 @@ namespace SpellThrower.Tests
             Assert.That(directAttack.p0Hand.Length, Is.EqualTo(1));
             Assert.That(directAttack.actionLeft, Is.EqualTo(GameRules.MaxCost));
 
+            Assert.That(GameRules.CanPlay(ref directAttack, 0, 0, 1, 1), Is.False,
+                        "a tile-target card must not target its caster");
+            Assert.That(GameRules.TryPlay(ref directAttack, 0, 0, 1, 1), Is.False);
+            Assert.That(directAttack.p0Hp, Is.EqualTo(GameRules.MaxHp));
+            Assert.That(directAttack.p0Hand.Length, Is.EqualTo(1));
+
             Assert.That(GameRules.TryPlay(ref directAttack, 0, 0, 3, 1), Is.True,
                         "the same card must resolve when the opponent occupies the tile");
             Assert.That(directAttack.p1Hp, Is.EqualTo(GameRules.MaxHp - 5));
@@ -80,6 +86,8 @@ namespace SpellThrower.Tests
             areaCard.p0Hand.Add((byte)CardId.Burn);
             areaCard.actionLeft = (byte)GameRules.MaxCost;
 
+            Assert.That(GameRules.CanPlay(ref areaCard, 0, 0, 1, 1), Is.False,
+                        "an empty-tile area card must still reject its caster's tile");
             Assert.That(GameRules.CanPlay(ref areaCard, 0, 0, 2, 1), Is.True,
                         "an area card that opts into empty tiles must keep that behavior");
             Assert.That(GameRules.TryPlay(ref areaCard, 0, 0, 2, 1), Is.True);
